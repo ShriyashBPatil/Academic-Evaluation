@@ -5,7 +5,7 @@ from firebase_admin import credentials, firestore
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'
 
-cred = credentials.Certificate(r'D:\Madhura\Academic-Evaluation\venv\Include\privatekey.json') 
+cred = credentials.Certificate(r'./privatekey.json') 
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
@@ -21,11 +21,19 @@ def login():
         email = request.form['email']
         password = request.form['password']
         try:
-          
-            session['user'] = {'email': email} 
-            return redirect(url_for('home'))
-        except:
-            return 'Login failed'
+            # Assuming you have a way to verify the user's credentials and fetch their role
+            user = db.collection('Users').where('email', '==', email).get()
+            if user:
+                user_data = user[0].to_dict()
+                session['user'] = {'email': email, 'role': user_data['role']}
+                if user_data['role'] == 'student':
+                    return redirect(url_for('student_dashboard'))
+                else:
+                    return redirect(url_for('home'))
+            else:
+                return 'Login failed'
+        except Exception as e:
+            return f'An error occurred: {str(e)}'
     return render_template('login.html')
 
 @app.route('/signup', methods=['GET', 'POST'])
@@ -33,9 +41,10 @@ def signup():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
+        role = request.form['role']  # Get the role from the form
         try:
-          
-            session['user'] = {'email': email}  
+            # Save user data including role to session or database
+            session['user'] = {'email': email, 'role': role}  
             return redirect(url_for('home'))
         except:
             return 'Signup failed'
@@ -65,6 +74,12 @@ def add_data():
 @app.route('/logout')
 def logout():
     session.pop('user', None)
+    return redirect(url_for('login'))
+
+@app.route('/student_dashboard')
+def student_dashboard():
+    if 'user' in session and session['user']['role'] == 'student':
+        return render_template('dashboard.html')
     return redirect(url_for('login'))
 
 if __name__ == '__main__':

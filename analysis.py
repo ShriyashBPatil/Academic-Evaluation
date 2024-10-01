@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 # Initialize Firebase Admin with service account
-cred = credentials.Certificate(r'D:\Madhura\Academic-Evaluation\venv\Include\privatekey.json')  # Replace with the path to your service account JSON file
+cred = credentials.Certificate(r'./privatekey.json')  # Replace with the path to your service account JSON file
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
